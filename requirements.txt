@@ -88,7 +88,6 @@ python-dateutil==2.9.0.post0
 pyttsx3==2.98
 pytube==15.0.0
 pytz==2024.2
-pywin32==308
 referencing==0.35.1
 rembg==2.0.61
 requests==2.32.3
