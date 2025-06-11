@@ -1,5 +1,5 @@
-flask
-opencv-python
+Flask==2.3.3
 numpy
-tensorflow==2.13.0
+opencv-python-headless
 mediapipe
+tensorflow==2.14.0
