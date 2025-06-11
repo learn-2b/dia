@@ -1,6 +1,5 @@
-Flask
-opencv-python-headless
+flask
+opencv-python
 numpy
-tensorflow
-keras
+tensorflow==2.13.0
 mediapipe
