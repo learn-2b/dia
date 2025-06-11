@@ -1,26 +1,30 @@
 from flask import Flask, request, jsonify, render_template
 import cv2
 import numpy as np
+import tensorflow as tf
 import mediapipe as mp
 import os
-import tensorflow as tf
 
 app = Flask(__name__)
 
 # تحميل نموذج TFLite
-interpreter = tf.lite.Interpreter(model_path='hand_gesture_model.tflite')
+TFLITE_MODEL_PATH = 'hand_gesture_model.tflite'
+interpreter = tf.lite.Interpreter(model_path=TFLITE_MODEL_PATH)
 interpreter.allocate_tensors()
 
+# إعداد معلومات الإدخال والإخراج للنموذج
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
+# قائمة الإيماءات
 gestures = ["Hello", "Good", "Bad", "thanks"]
 
-# Mediapipe إعداد
+# إعداد Mediapipe
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(static_image_mode=True, max_num_hands=1, min_detection_confidence=0.5)
 
 def extract_hand_landmarks(image_path):
+    """استخراج معالم اليد من الصورة"""
     image = cv2.imread(image_path)
     if image is None:
         return None, "تعذر تحميل الصورة."
@@ -33,23 +37,27 @@ def extract_hand_landmarks(image_path):
 
     hand_landmarks = results.multi_hand_landmarks[0]
     landmarks = [coord for point in hand_landmarks.landmark for coord in (point.x, point.y, point.z)]
+
     return np.array(landmarks, dtype=np.float32), None
 
 def predict_gesture(image_path):
+    """التنبؤ بالإيماءة باستخدام TFLite"""
     landmarks, error = extract_hand_landmarks(image_path)
     if error:
         return {"error": error}
 
+    # إعادة تشكيل البيانات لتتناسب مع النموذج
     input_data = landmarks.reshape(1, 21, 3).astype(np.float32)
 
     interpreter.set_tensor(input_details[0]['index'], input_data)
     interpreter.invoke()
-    prediction = interpreter.get_tensor(output_details[0]['index'])
 
+    prediction = interpreter.get_tensor(output_details[0]['index'])[0]
     predicted_index = np.argmax(prediction)
+
     return {
         "gesture": gestures[predicted_index],
-        "confidence": float(prediction[0][predicted_index]) * 100
+        "confidence": float(prediction[predicted_index]) * 100
     }
 
 @app.route('/')
@@ -58,6 +66,7 @@ def home():
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    """رفع الصورة والتنبؤ"""
     if 'file' not in request.files:
         return jsonify({"error": "لم يتم رفع أي ملف."})
 
