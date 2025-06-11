@@ -1,13 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Hand Gesture Detection</title>
+    <meta charset="UTF-8">
+    <title>Hand Gesture Prediction</title>
 </head>
 <body>
-  <h1>Upload Hand Image</h1>
-  <form action="/predict" method="post" enctype="multipart/form-data">
-    <input type="file" name="file" required />
-    <button type="submit">Predict</button>
-  </form>
+    <h1>ارفع صورة لليد لتحديد الإيماءة</h1>
+    <form action="/predict" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept="image/*" required>
+        <input type="submit" value="تنبأ">
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        const form = document.querySelector("form");
+        const resultDiv = document.getElementById("result");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const response = await fetch("/predict", {
+                method: "POST",
+                body: formData
+            });
+            const data = await response.json();
+            resultDiv.innerHTML = data.error
+                ? `<p style="color:red;">${data.error}</p>`
+                : `<h3>النتيجة: ${data.gesture}</h3><p>الثقة: ${data.confidence.toFixed(2)}%</p>`;
+        });
+    </script>
 </body>
 </html>
